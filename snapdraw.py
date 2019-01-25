@@ -9,6 +9,15 @@ except:
 from PIL import ImageGrab, ImageQt
 from collections import deque
 
+"""
+snapdraw.py - a simple tool much like the Snipping Tool in windows,
+only multiplatform, a bit simpler, and easily integratable into other python apps.
+Use it like so:
+ScreenshotOverlay is for getting a PIL screen grab image from drag area.
+AnnotationWindow is for editing any PIL image, and gives control back to
+calling frame when finished or cancelled. AnnotationWindow.final_img is result.
+Or call main() to just run it in normal configuration and get PIL image result. 
+"""
 
 class ScreenshotOverlay(QDialog):
     """
@@ -401,23 +410,31 @@ class ScreenshotContext(object):
         QApplication.restoreOverrideCursor()
 
 
-# Use it like so:
-# ScreenshotOverlay is for getting a PIL screen grab image from drag area.
-# AnnotationWindow is for editing any PIL image, and gives control back to
-# calling frame when finished or cancelled. AnnotationWindow.final_img is result.
+def main(parentWidget=None, isQt=True):
+    """
+    Convenience function for basic use case.
+    Get screenshot with ScreenshotOverlay, pass image to AnnotationWindow,
+    and get the final edited image back.
+    :parentWidget: optional QObject to use as parent for the windows
+    :isQt: bool for whether there is an existing QApp running. Assumed True.
+    :return: PIL image, or None if cancelled at any stage
+    """
+    if not isQt:
+        app = QApplication(sys.argv)
+    try:
+        snap = ScreenshotOverlay(parentWidget)
+        with ScreenshotContext(snap):
+            res = snap.exec_()
+        if res:
+            draw = AnnotationWindow(snap.img, parentWidget)
+            draw.exec_()
+            return draw.final_img
+    except:
+        raise
+    finally:
+        if not isQt:
+            app.quit()
+
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ss = ScreenshotOverlay()
-    with ScreenshotContext(ss):
-        res = ss.exec_()
-    if res:
-        annot = AnnotationWindow(ss.img)
-        annot_res = annot.exec_()
-        if annot_res:
-            print(annot.final_img)
-
-    ss.close()
-    annot.close()
-    del(ss, annot)
-    sys.exit(app.quit())
+    sys.exit(main(isQt=False))
