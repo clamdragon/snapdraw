@@ -1,4 +1,5 @@
 import sys
+import os
 try:
     from PySide2.QtCore import *
     from PySide2.QtGui import *
@@ -143,7 +144,7 @@ class AnnotationWindow(QDialog):
 
         # different pens
         icon_pix = QPixmap(8, 8)
-        for color in (Qt.red, Qt.blue, Qt.green, Qt.white):
+        for color in (Qt.red, Qt.blue, Qt.green, Qt.darkMagenta, Qt.white):
             icon_pix.fill(color)
             s = "{} Pen".format(str(color).split(".")[-1].title())
             pen_action = self.pens_grp.addAction(toolbar.addAction(QIcon(icon_pix), s))
@@ -151,7 +152,7 @@ class AnnotationWindow(QDialog):
             pen_action.setCheckable(True)
 
         icon_pix = QPixmap(16, 16)
-        hilite_color = QColor.fromRgbF(1, 1, 0, .3)
+        hilite_color = QColor.fromRgbF(.9, 1, .1, .2)
         icon_pix.fill(hilite_color)
         hilite_action = self.pens_grp.addAction(toolbar.addAction(
             QIcon(icon_pix), "Highlighter"))
@@ -220,11 +221,19 @@ class AnnotationWindow(QDialog):
         """
         if self.canvas:
             img = self.canvas.get_final_image()
-            d = "C:/"
-            out_path, ext = QFileDialog.getSaveFileName(
-                caption="Save Annotated Snapshot", dir=d, filter="*.jpg")
+            out_path = QFileDialog.getSaveFileName(
+                caption="Save Annotated Snapshot", dir=os.path.expanduser("~"),
+                filter="Images (*.png *.jpg *.bmp)", selectedFilter="*.png")[0]
             if out_path:
-                img.save(out_path, format="JPEG")
+                ext = os.path.splitext(out_path)[-1]
+                if ext == ".jpg":
+                    img.save(out_path, format="JPEG", optimize=True)
+                elif ext == ".bmp":
+                    img.save(out_path, format="BMP", optimize=True)
+                elif ext == ".png":
+                    img.save(out_path, format="PNG", optimize=True, quality=100)
+                else:
+                    raise IOError("Invalid file extension.")
 
     def finish_img(self):
         """
