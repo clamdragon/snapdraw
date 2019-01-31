@@ -12,4 +12,4 @@ Use it like so:
 
 Or call main() to run normal configuration and get PIL image result. 
 
-Requires pillow & PySide
+Developed on Python 2.7. Requires pillow & PySide
